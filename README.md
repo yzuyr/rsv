@@ -31,6 +31,41 @@ npm install @ryuz/rsv
 </Router>
 ```
 
+---
+
+## Hash Router Mode
+
+RSV supports both history and hash-based routing. Hash mode is useful for SPAs that are served from static file hosts or environments where server-side routing is not available.
+
+### Enabling Hash Mode
+
+Set the `mode` prop on the `Router` component:
+
+```svelte
+<Router mode="hash">
+	<Route path="/foo" component={Foo} />
+	<Route path="/bar" component={Bar} />
+</Router>
+```
+
+### Anchor Hrefs in Hash Mode
+
+When using hash mode, anchor tags should use `href="#/your-path"` to ensure navigation works as expected:
+
+```svelte
+<a href="#/bar">Go to Bar</a>
+```
+
+Imperative navigation (`router.navigate('/bar')` or `navigate('/bar')`) works the same in both modes.
+
+### When to Use Hash Mode
+
+- Deploying to static file hosts (e.g., GitHub Pages, S3, Netlify static)
+- No server-side support for SPA routing
+- Wanting URLs like `/#/foo` instead of `/foo`
+
+---
+
 ### Dynamic Segments
 
 If a route contains `:param`, the matched value is passed as a prop:

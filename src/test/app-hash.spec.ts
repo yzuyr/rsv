@@ -1,11 +1,16 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { render, act } from '@testing-library/svelte';
-import App from './app.svelte';
+import AppHash from './app-hash.svelte';
 import { navigate } from '../lib/index.js';
 
-describe('Test App', () => {
+describe('Test App (hash mode)', () => {
+	beforeEach(() => {
+		window.location.hash = '';
+	});
+
 	it('renders fallback route when no match', async () => {
-		const { getByTestId } = render(App);
+		window.location.hash = '#/not-a-route';
+		const { getByTestId } = render(AppHash);
 		await act(() => {
 			navigate('/not-a-route');
 		});
@@ -15,7 +20,8 @@ describe('Test App', () => {
 	});
 
 	it('handles query parameters', async () => {
-		const { getByText } = render(App);
+		window.location.hash = '#/foo?bar=baz';
+		const { getByText } = render(AppHash);
 		await act(() => {
 			navigate('/foo?bar=baz');
 		});
@@ -25,7 +31,8 @@ describe('Test App', () => {
 	});
 
 	it('handles dynamic segments', async () => {
-		const { getByTestId } = render(App);
+		window.location.hash = '#/baz/123';
+		const { getByTestId } = render(AppHash);
 		await act(() => {
 			navigate('/baz/123');
 		});
@@ -35,18 +42,19 @@ describe('Test App', () => {
 	});
 
 	it('renders children', async () => {
-		const { getByText } = render(App);
+		window.location.hash = '#/foo';
+		const { getByText } = render(AppHash);
 		act(() => {
 			navigate('/foo');
 		});
-		// wait for render
 		await new Promise((resolve) => setTimeout(resolve, 100));
 		const rendered = getByText('Foo').innerText;
 		expect(rendered).toEqual('Foo');
 	});
 
 	it('can navigate', async () => {
-		const { getByText, getByTestId } = render(App);
+		window.location.hash = '#/foo';
+		const { getByText, getByTestId } = render(AppHash);
 		await act(() => {
 			navigate('/foo');
 		});

@@ -2,11 +2,27 @@
 	import { setContext, onDestroy, type Snippet, onMount } from 'svelte';
 	import { navigate as rsvNavigate, type NavigateOptions } from './navigate.js';
 
-	let { url = '', children } = $props<{ url?: string; children: Snippet }>();
+	let {
+		url = '',
+		children,
+		mode = 'history'
+	} = $props<{ url?: string; children: Snippet; mode?: 'history' | 'hash' }>();
+
+	// Determine if we're in hash mode
+	const isHashMode = mode === 'hash';
 
 	import type { RouterContext } from './types.js';
+	let initialPath = '/';
+	if (typeof window !== 'undefined' && isHashMode) {
+		const hash = window.location.hash.replace(/^#/, '') || '/';
+		const [hashPath] = hash.split('?');
+		initialPath = hashPath.startsWith('/') ? hashPath : '/' + hashPath;
+	}
+	if (typeof window !== 'undefined' && !isHashMode) {
+		initialPath = window.location.pathname;
+	}
 	let router: RouterContext = $state({
-		path: url || (typeof window !== 'undefined' ? window.location.pathname : '/'),
+		path: url || initialPath,
 		routes: [],
 		query: {},
 		params: {},
@@ -23,20 +39,49 @@
 	 */
 	function updateRouter() {
 		if (typeof window === 'undefined') return;
-		router.path = window.location.pathname;
-		const search = window.location.search;
+
+		let path: string;
+		let search: string;
+
+		if (isHashMode) {
+			// Hash mode: path after #, query after ? in hash
+			const hash = window.location.hash.replace(/^#/, '') || '/';
+			const [hashPath, hashQuery = ''] = hash.split('?');
+			path = hashPath.startsWith('/') ? hashPath : '/' + hashPath;
+			search = hashQuery ? '?' + hashQuery : '';
+		} else {
+			path = window.location.pathname;
+			search = window.location.search;
+		}
+
 		const params = new URLSearchParams(search);
 		let queryObj: Record<string, string> = {};
 		for (const [key, value] of params.entries()) {
 			queryObj[key] = value;
 		}
+
+		router.path = path;
 		router.query = queryObj;
 	}
 
 	// Assign the imported navigation to the router context.
 	router.navigate = (to: string, options: NavigateOptions = {}) => {
-		rsvNavigate(to, options);
-		updateRouter();
+		if (typeof window === 'undefined') return;
+		if (isHashMode) {
+			// In hash mode, update the hash
+			const [path, search = ''] = to.split('?');
+			const hash = path.startsWith('/') ? path : '/' + path;
+			const hashWithQuery = search ? `${hash}?${search}` : hash;
+			if (options.replace) {
+				window.location.replace(`#${hashWithQuery}`);
+			} else {
+				window.location.hash = hashWithQuery;
+			}
+			// updateRouter will be called by hashchange event
+		} else {
+			rsvNavigate(to, options);
+			updateRouter();
+		}
 	};
 
 	/**
@@ -44,10 +89,22 @@
 	 */
 	function removeQueryParams(keys: string[]): void {
 		if (typeof window === 'undefined') return;
-		const url = new URL(window.location.href);
-		keys.forEach((key) => url.searchParams.delete(key));
-		window.history.replaceState({}, '', url.toString());
-		updateRouter();
+		if (isHashMode) {
+			// In hash mode, update the hash
+			const hash = window.location.hash.replace(/^#/, '') || '/';
+			const [hashPath, hashQuery = ''] = hash.split('?');
+			const searchParams = new URLSearchParams(hashQuery);
+			keys.forEach((key) => searchParams.delete(key));
+			const newHashQuery = searchParams.toString();
+			const newHash = `${hashPath}?${newHashQuery}`;
+			window.location.hash = newHash;
+			updateRouter();
+		} else {
+			const url = new URL(window.location.href);
+			keys.forEach((key) => url.searchParams.delete(key));
+			window.history.replaceState({}, '', url.toString());
+			updateRouter();
+		}
 	}
 
 	let popstateCleanup: (() => void) | undefined;
@@ -56,16 +113,19 @@
 		if (typeof window === 'undefined') return;
 		updateRouter();
 		const handler = updateRouter;
-		window.addEventListener('popstate', handler);
-		popstateCleanup = () => window.removeEventListener('popstate', handler);
+		if (isHashMode) {
+			window.addEventListener('hashchange', handler);
+			popstateCleanup = () => window.removeEventListener('hashchange', handler);
+		} else {
+			window.addEventListener('popstate', handler);
+			popstateCleanup = () => window.removeEventListener('popstate', handler);
+		}
 	});
 
 	// Clean up event listeners on destroy
 	onDestroy(() => {
 		if (popstateCleanup) popstateCleanup();
 	});
-
-	router.navigate = rsvNavigate;
 
 	// Improved query helper function names.
 	/**
