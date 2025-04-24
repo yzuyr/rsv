@@ -1,5 +1,7 @@
 {
-	"name": "rsv2",
+	"name": "@ryuz/rsv",
+	"description": "Tiny router for Svelte 5 SPAs. Runes friendly.",
+	"license": "Apache-2.0",
 	"version": "0.0.1",
 	"scripts": {
 		"dev": "vite dev",
