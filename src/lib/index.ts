@@ -4,6 +4,7 @@
  * @module rsv
  */
 import { getContext } from 'svelte';
+import { ROUTER_CONTEXT_KEY } from './const.js';
 import type { RouterContext } from './types.js';
 
 /**
@@ -31,6 +32,11 @@ export { navigate } from './navigate.js';
  *   const router = useRsv();
  *   const currentPath = $derived(router.path);
  */
-export function useRsv(): RouterContext {
-	return getContext('router');
+export function useRsv(): RouterContext | undefined {
+	const ctx = getContext(ROUTER_CONTEXT_KEY);
+	if (!ctx) {
+		console.warn('useRsv called outside of Router context');
+		return undefined;
+	}
+	return ctx as RouterContext;
 }

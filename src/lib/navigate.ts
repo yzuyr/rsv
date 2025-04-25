@@ -1,12 +1,4 @@
-/**
- * Options for navigation.
- * @typedef {Object} NavigateOptions
- * @property {boolean} [replace] - If true, replaces the current history entry instead of pushing a new one.
- */
-export type NavigateOptions = {
-	/** If true, replaces the current history entry instead of pushing a new one. */
-	replace?: boolean;
-};
+import type { NavigateOptions } from './types.js';
 
 /**
  * Imperatively navigate to a new URL.

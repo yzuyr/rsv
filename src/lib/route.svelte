@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { getContext, onMount, type Component, type Snippet } from 'svelte';
+	import { ROUTER_CONTEXT_KEY } from './const.js';
 
 	let { path, component, children } = $props<{
 		path?: string;
@@ -7,7 +8,7 @@
 		children?: Snippet;
 	}>();
 	import type { RouterContext } from './types.js';
-	const router = getContext<RouterContext>('router');
+	const router = getContext<RouterContext>(ROUTER_CONTEXT_KEY);
 
 	// Only register the route pattern once (on mount), not on every render.
 	onMount(() => {

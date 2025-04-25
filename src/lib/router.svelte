@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { setContext, onDestroy, type Snippet, onMount } from 'svelte';
+	import { ROUTER_CONTEXT_KEY } from './const.js';
 	import { navigate as rsvNavigate, type NavigateOptions } from './navigate.js';
 
 	let {
@@ -158,7 +159,7 @@
 	 * - navigate: navigation function
 	 * - getQueryParam, hasQueryParam, removeQueryParams: helpers
 	 */
-	setContext('router', router);
+	setContext(ROUTER_CONTEXT_KEY, router);
 </script>
 
 <!-- Render children (the Route components) via the default slot -->
