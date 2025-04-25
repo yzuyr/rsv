@@ -109,18 +109,16 @@
 
 	let popstateCleanup: (() => void) | undefined;
 
-	onMount(() => {
-		if (typeof window === 'undefined') return;
+	if (typeof window !== 'undefined') {
 		updateRouter();
-		const handler = updateRouter;
 		if (isHashMode) {
-			window.addEventListener('hashchange', handler);
-			popstateCleanup = () => window.removeEventListener('hashchange', handler);
+			window.addEventListener('hashchange', updateRouter);
+			popstateCleanup = () => window.removeEventListener('hashchange', updateRouter);
 		} else {
-			window.addEventListener('popstate', handler);
-			popstateCleanup = () => window.removeEventListener('popstate', handler);
+			window.addEventListener('popstate', updateRouter);
+			popstateCleanup = () => window.removeEventListener('popstate', updateRouter);
 		}
-	});
+	}
 
 	// Clean up event listeners on destroy
 	onDestroy(() => {
